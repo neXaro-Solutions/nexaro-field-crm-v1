@@ -1,12 +1,413 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css"><title>neXaro Field CRM</title></head><body>
-<header><div><small>neXaro Solutions</small><h1>Field CRM</h1></div><button id="settings">⚙️</button></header>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>neXaro Solutions – Field CRM</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header class="topbar">
+  <div>
+    <small>neXaro Solutions</small>
+    <h1>Field CRM</h1>
+  </div>
+  <div class="header-badge">SUMUP VERTRIEB</div>
+</header>
+
 <main>
-<section id="dashboard" class="screen active"><div class="hero"><b>SUMUP VERTRIEB</b><h2>Heute draußen. Morgen mehr Abschlüsse. 🚀</h2><p>Leads erfassen, Besuche dokumentieren und Follow-ups konsequent abarbeiten.</p></div><div class="kpis"><div><small>Offene Leads</small><strong id="kLeads">0</strong></div><div><small>Heute fällig</small><strong id="kTasks">0</strong></div><div><small>Termine</small><strong id="kAppts">0</strong></div><div><small>Gewonnen</small><strong id="kWon">0</strong></div></div><button class="primary wide" id="quick">＋ Lead in 60 Sekunden erfassen</button><h3>Nächste Schritte</h3><div id="preview"></div></section>
-<section id="leads" class="screen"><div class="row"><h2>Leads</h2><button class="primary" id="add">＋ Lead</button></div><input id="search" placeholder="Firma, Ort, Kontakt suchen…"><div class="filters"><button class="active" data-f="all">Alle</button><button data-f="neu">Neu</button><button data-f="kontaktiert">Kontaktiert</button><button data-f="termin">Termin</button><button data-f="gewonnen">Gewonnen</button></div><div id="list"></div></section>
-<section id="area" class="screen"><h2>Gebiet</h2><div class="card center"><div class="pin">📍</div><h3>15913 + 50 km</h3><p>Standort ermitteln und anschließend Leads über deine Karten-App ansteuern.</p><button class="primary" id="locate">📍 Standort ermitteln</button><small id="locStatus"></small></div><h3>Leads mit Adresse</h3><div id="areaList"></div></section>
-<section id="tasks" class="screen"><h2>Follow-ups</h2><div id="taskList"></div></section>
-<section id="more" class="screen"><h2>Mehr</h2><div class="menu"><button id="csv">⬇️ CSV exportieren</button><button id="json">💾 JSON-Backup</button><label>⬆️ JSON wiederherstellen<input id="restore" type="file" accept=".json"></label><button id="demo">🧪 Demo-Daten laden</button><button id="clear" class="danger">🗑️ Daten löschen</button></div><p class="info">V1 ist eine mobile PWA mit lokaler Speicherung. Export/Backup ist integriert. Die Datenstruktur ist für eine spätere Team-/Cloud-Version vorbereitet.</p></section>
+
+<section id="dashboard" class="screen active">
+  <div class="hero">
+    <small>HEUTE DRAUSSEN</small>
+    <h2>Morgen mehr Abschlüsse. 🚀</h2>
+    <p>Deine mobile Vertriebszentrale für Leads, Gebiet, Follow-ups und Sales.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <strong data-stat="leads">0</strong>
+      <span>Offene Leads</span>
+    </div>
+    <div class="stat">
+      <strong data-stat="tasks">0</strong>
+      <span>Heute fällig</span>
+    </div>
+    <div class="stat">
+      <strong data-stat="appointments">0</strong>
+      <span>Termine</span>
+    </div>
+    <div class="stat">
+      <strong data-stat="won">0</strong>
+      <span>Gewonnen</span>
+    </div>
+  </div>
+
+  <button id="quick" class="primary big">＋ Lead in 60 Sekunden erfassen</button>
+
+  <div class="card">
+    <h3>Sales Assistant</h3>
+    <p>TPV, Anbieter, Bedarf und Tarif gemeinsam bewerten.</p>
+    <button onclick="document.querySelector('[data-s=leads]').click()">Lead analysieren</button>
+  </div>
+
+  <div class="card">
+    <h3>Gebiet</h3>
+    <p>Standort übernehmen und dein Vertriebsgebiet vorbereiten.</p>
+    <button onclick="document.querySelector('[data-s=area]').click()">Gebiet öffnen</button>
+  </div>
+</section>
+
+
+<section id="leads" class="screen">
+  <div class="section-head">
+    <div>
+      <small>CRM</small>
+      <h2>Leads</h2>
+    </div>
+    <button id="add" class="primary">＋ Lead</button>
+  </div>
+
+  <input id="search" class="search" placeholder="Firma, Ansprechpartner, Ort suchen …">
+
+  <div id="leadList"></div>
+
+  <div class="card">
+    <h3>Qualifizierung</h3>
+    <p><strong>Internes Vertriebsziel:</strong> mindestens €5.000 monatliches Kartenzahlungsvolumen.</p>
+    <p class="muted">Das ist ein internes Vertriebsziel und keine SumUp-Mindestanforderung.</p>
+  </div>
+</section>
+
+
+<section id="area" class="screen">
+  <div class="section-head">
+    <div>
+      <small>FIELD SALES</small>
+      <h2>Gebiet</h2>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📍 Standort</h3>
+    <p>Nutze deinen aktuellen Standort als Ausgangspunkt.</p>
+    <button id="locate" class="primary">Standort übernehmen</button>
+  </div>
+
+  <div class="card">
+    <h3>Gebiet vorbereiten</h3>
+
+    <label>
+      Postleitzahl
+      <input id="postal" placeholder="z. B. 50667">
+    </label>
+
+    <label>
+      Radius
+      <select id="radius">
+        <option value="1">1 km</option>
+        <option value="2">2 km</option>
+        <option value="5" selected>5 km</option>
+        <option value="10">10 km</option>
+      </select>
+    </label>
+
+    <button class="primary" onclick="alert('Gebietssuche wird im nächsten Ausbau mit Live-Unternehmensdaten und Routenoptimierung verbunden.')">
+      Unternehmen finden
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>🚗 Route</h3>
+    <p>Vertriebsroute effizient planen und anschließend an Google Maps übergeben.</p>
+    <button onclick="alert('Routenübergabe wird vorbereitet.')">Route vorbereiten</button>
+  </div>
+</section>
+
+
+<section id="tasks" class="screen">
+  <div class="section-head">
+    <div>
+      <small>FOLLOW-UP</small>
+      <h2>Tasks</h2>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Follow-ups</h3>
+    <p>Wiedervorlagen, Rückrufe und Termine gehören hier zusammen.</p>
+
+    <label>
+      Aufgabe
+      <input id="taskText" placeholder="z. B. Rückruf bei Müller Gastro">
+    </label>
+
+    <label>
+      Fällig am
+      <input id="taskDate" type="date">
+    </label>
+
+    <button class="primary" onclick="addTask()">Task speichern</button>
+  </div>
+
+  <div id="taskList"></div>
+</section>
+
+
+<section id="more" class="screen">
+  <div class="section-head">
+    <div>
+      <small>SYSTEM</small>
+      <h2>Mehr</h2>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💾 Backup & Export</h3>
+    <p>Deine CRM-Daten bleiben lokal auf deinem Gerät.</p>
+    <button onclick="exportData()">Daten exportieren</button>
+  </div>
+
+  <div class="card">
+    <h3>💰 Interne Vertriebslogik</h3>
+    <p>Provisionen und interne Vertriebskennzahlen bleiben ausschließlich intern.</p>
+    <p class="muted">Kunden sehen keine Provisionsberechnung.</p>
+  </div>
+
+  <div class="card">
+    <h3>📱 neXaro Field CRM</h3>
+    <p>Version 1.0</p>
+  </div>
+</section>
+
 </main>
-<nav><button class="active" data-s="dashboard">⌂<small>Start</small></button><button data-s="leads">◎<small>Leads</small></button><button data-s="area">⌖<small>Gebiet</small></button><button data-s="tasks">✓<small>Tasks</small></button><button data-s="more">•••<small>Mehr</small></button></nav>
-<dialog id="dlg"><form id="form"><div class="row"><h2 id="dlgTitle">Neuer Lead</h2><button type="button" id="close">✕</button></div><input type="hidden" id="id"><label>Firma*<input id="company" required></label><div class="grid"><label>Branche<select id="industry"><option>Kiosk / Späti</option><option>Einzelhandel</option><option>Bäckerei</option><option>Getränkemarkt</option><option>Gastronomie</option><option>Sonstiges</option></select></label><label>Status<select id="status"><option value="neu">Neu</option><option value="kontaktiert">Kontaktiert</option><option value="qualifiziert">Qualifiziert</option><option value="termin">Termin</option><option value="angebot">Angebot</option><option value="gewonnen">Gewonnen</option><option value="verloren">Verloren</option></select></label></div><label>Ansprechpartner<input id="contact"></label><div class="grid"><label>Telefon<input id="phone" type="tel"></label><label>E-Mail<input id="email" type="email"></label></div><label>Adresse<input id="address" placeholder="Straße, PLZ Ort"></label><div class="grid"><label>Aktueller Anbieter<input id="provider"></label><label>Aktuelles Terminal<input id="terminal"></label></div><div class="grid"><label>Interesse<select id="product"><option>Solo</option><option>Terminal</option><option>Kassensystem / POS</option><option>Plus</option><option>Noch offen</option></select></label><label>Priorität<select id="priority"><option>Hoch</option><option>Mittel</option><option>Niedrig</option></select></label></div><label>Hauptproblem / Bedarf<textarea id="need"></textarea></label><label>Nächste Aktion<input id="next"></label><label>Fällig am<input id="due" type="date"></label><label>Notizen<textarea id="notes"></textarea></label><div class="actions"><button type="button" id="cancel">Abbrechen</button><button class="primary">Speichern</button></div></form></dialog>
-<script src="app.js"></script></body></html>
+
+
+<nav>
+  <button class="active" data-s="dashboard">⌂<span>Start</span></button>
+  <button data-s="leads">◎<span>Leads</span></button>
+  <button data-s="area">⌖<span>Gebiet</span></button>
+  <button data-s="tasks">✓<span>Tasks</span></button>
+  <button data-s="more">☰<span>Mehr</span></button>
+</nav>
+
+
+<dialog id="dlg">
+<form id="form">
+
+<div class="modal-head">
+  <div>
+    <small>CRM</small>
+    <h2>Neuer Lead</h2>
+  </div>
+  <button type="button" onclick="document.querySelector('#dlg').close()">×</button>
+</div>
+
+<input type="hidden" name="id">
+
+<label>
+  Firma*
+  <input name="firma" required placeholder="Firmenname">
+</label>
+
+<label>
+  Branche
+  <select name="branche">
+    <option>Kiosk / Späti</option>
+    <option>Gastronomie</option>
+    <option>Einzelhandel</option>
+    <option>Dienstleistung</option>
+    <option>Hotel</option>
+    <option>Sonstiges</option>
+  </select>
+</label>
+
+<label>
+  Status
+  <select name="status">
+    <option>Neu</option>
+    <option>Qualifiziert</option>
+    <option>Termin</option>
+    <option>Angebot</option>
+    <option>Gewonnen</option>
+    <option>Verloren</option>
+  </select>
+</label>
+
+<label>
+  Ansprechpartner
+  <input name="ansprechpartner" placeholder="Vor- und Nachname">
+</label>
+
+<label>
+  Telefon
+  <input name="telefon" type="tel" placeholder="+49 …">
+</label>
+
+<label>
+  E-Mail
+  <input name="email" type="email" placeholder="name@firma.de">
+</label>
+
+<label>
+  Adresse
+  <input name="adresse" placeholder="Straße, PLZ Ort">
+</label>
+
+<label>
+  Monatliches Kartenzahlungsvolumen (TPV) €
+  <input name="tpv" type="number" min="0" step="100" placeholder="z. B. 5000">
+</label>
+
+<label>
+  Aktueller Anbieter
+  <input name="anbieter" placeholder="z. B. SumUp, PayPal, Worldline …">
+</label>
+
+<label>
+  Aktuelles Terminal
+  <input name="terminal" placeholder="Modell / Anbieter">
+</label>
+
+<label>
+  Interesse
+  <select name="interesse">
+    <option>Solo</option>
+    <option>Solo Lite</option>
+    <option>Terminal</option>
+    <option>Tap to Pay</option>
+    <option>Kassensystem</option>
+    <option>Noch offen</option>
+  </select>
+</label>
+
+<label>
+  Priorität
+  <select name="prioritaet">
+    <option>Hoch</option>
+    <option>Mittel</option>
+    <option>Niedrig</option>
+  </select>
+</label>
+
+<label>
+  Hauptproblem / Bedarf
+  <textarea name="bedarf" placeholder="Was möchte der Händler verbessern?"></textarea>
+</label>
+
+<label>
+  Nächste Aktion
+  <input name="naechsteAktion" placeholder="z. B. Angebot senden">
+</label>
+
+<label>
+  Nächster Kontakt
+  <input name="naechsterKontakt" type="date">
+</label>
+
+<div class="modal-actions">
+  <button type="button" onclick="document.querySelector('#dlg').close()">Abbrechen</button>
+  <button type="submit" class="primary">Lead speichern</button>
+</div>
+
+</form>
+</dialog>
+
+
+<script src="app.js"></script>
+
+<script>
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById(id);
+  if(target)target.classList.add('active');
+
+  document.querySelectorAll('nav button').forEach(b=>{
+    b.classList.toggle('active',b.dataset.s===id);
+  });
+}
+
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>showScreen(b.dataset.s));
+});
+
+document.getElementById('quick')?.addEventListener('click',()=>{
+  document.getElementById('dlg').showModal();
+});
+
+document.getElementById('add')?.addEventListener('click',()=>{
+  document.getElementById('dlg').showModal();
+});
+
+function addTask(){
+  const text=document.getElementById('taskText').value.trim();
+  const date=document.getElementById('taskDate').value;
+
+  if(!text){
+    alert('Bitte Aufgabe eingeben.');
+    return;
+  }
+
+  S.tasks=S.tasks||[];
+  S.tasks.push({
+    id:Date.now().toString(),
+    text,
+    date,
+    done:false
+  });
+
+  save();
+
+  document.getElementById('taskText').value='';
+  document.getElementById('taskDate').value='';
+
+  renderTasks();
+  render();
+}
+
+function renderTasks(){
+  const box=document.getElementById('taskList');
+  if(!box)return;
+
+  const tasks=S.tasks||[];
+
+  if(!tasks.length){
+    box.innerHTML='<div class="empty">Noch keine Tasks vorhanden.</div>';
+    return;
+  }
+
+  box.innerHTML=tasks.map(t=>`
+    <div class="card">
+      <strong>${t.text}</strong>
+      <p>${t.date||'Kein Datum'}</p>
+    </div>
+  `).join('');
+}
+
+function exportData(){
+  const blob=new Blob(
+    [JSON.stringify(S,null,2)],
+    {type:'application/json'}
+  );
+
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='nexaro-field-crm-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderTasks();
+});
+</script>
+
+</body>
+</html>
