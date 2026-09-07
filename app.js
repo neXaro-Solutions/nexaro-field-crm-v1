@@ -587,12 +587,20 @@ function importData(file) {
 function setupNavigation() {
   $$('nav button').forEach(b => {
     b.addEventListener('click', () => {
+      const target = b.dataset.target;
 
       $$('nav button').forEach(x =>
         x.classList.remove('active')
       );
 
       b.classList.add('active');
+
+      $$('[data-view]').forEach(view => {
+        view.classList.toggle(
+          'active',
+          view.dataset.view === target
+        );
+      });
 
       render();
     });
