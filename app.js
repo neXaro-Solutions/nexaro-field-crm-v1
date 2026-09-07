@@ -1,9 +1,173 @@
-const KEY='nexaro-crm-v1';let S=JSON.parse(localStorage.getItem(KEY)||'{"leads":[]}');let filter='all';const $=x=>document.getElementById(x);const esc=x=>String(x||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);const save=()=>{localStorage.setItem(KEY,JSON.stringify(S));render()};const status=x=>({neu:'Neu',kontaktiert:'Kontaktiert',qualifiziert:'Qualifiziert',termin:'Termin',angebot:'Angebot',gewonnen:'Gewonnen',verloren:'Verloren'}[x]||x);
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===b.dataset.s));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));render()});
-function openLead(id){$('form').reset();$('id').value=id||'';$('dlgTitle').textContent=id?'Lead bearbeiten':'Neuer Lead';if(id){const l=S.leads.find(x=>x.id===id);['company','industry','status','contact','phone','email','address','provider','terminal','product','priority','need','next','due','notes'].forEach(k=>$(k).value=l[k]||'')}$('dlg').showModal()}
-$('quick').onclick=()=>openLead();$('add').onclick=()=>openLead();$('close').onclick=()=>$('dlg').close();$('cancel').onclick=()=>$('dlg').close();$('form').onsubmit=e=>{e.preventDefault();const data={company:$('company').value.trim(),industry:$('industry').value,status:$('status').value,contact:$('contact').value,phone:$('phone').value,email:$('email').value,address:$('address').value,provider:$('provider').value,terminal:$('terminal').value,product:$('product').value,priority:$('priority').value,need:$('need').value,next:$('next').value,due:$('due').value,notes:$('notes').value};const id=$('id').value;if(id)Object.assign(S.leads.find(x=>x.id===id),data);else S.leads.unshift({id:uid(),createdAt:new Date().toISOString(),...data});$('dlg').close();save()};
-function card(l){return `<div class="card lead"><div class="top"><div><b>${esc(l.company)}</b><div class="meta">${esc(l.industry)}${l.address?' · '+esc(l.address):''}</div></div><span class="pill">${esc(status(l.status))}</span></div><div class="meta">${l.contact?esc(l.contact)+' · ':''}${esc(l.product)}${l.provider?' · aktuell: '+esc(l.provider):''}</div>${l.next?`<div><b>Nächster Schritt:</b> ${esc(l.next)}${l.due?' · '+esc(l.due):''}</div>`:''}<button onclick="openLead('${l.id}')">Bearbeiten</button>${l.phone?`<a href="tel:${esc(l.phone)}">📞 Anrufen</a>`:''}${l.address?`<button onclick="nav('${encodeURIComponent(l.address)}')">🧭 Navigation</button>`:''}<button onclick="visit('${l.id}')">📝 Besuch</button></div>`}
-function render(){const today=new Date().toISOString().slice(0,10);$('kLeads').textContent=S.leads.filter(l=>!['gewonnen','verloren'].includes(l.status)).length;$('kTasks').textContent=S.leads.filter(l=>l.due===today&&!['gewonnen','verloren'].includes(l.status)).length;$('kAppts').textContent=S.leads.filter(l=>l.status==='termin').length;$('kWon').textContent=S.leads.filter(l=>l.status==='gewonnen').length;const q=($('search').value||'').toLowerCase();const a=S.leads.filter(l=>(filter==='all'||l.status===filter)&&[l.company,l.contact,l.address,l.industry].join(' ').toLowerCase().includes(q));$('list').innerHTML=a.length?a.map(card).join(''):'<div class="card">Noch keine passenden Leads.</div>';const t=S.leads.filter(l=>l.due&&!['gewonnen','verloren'].includes(l.status)).sort((a,b)=>a.due.localeCompare(b.due));$('taskList').innerHTML=t.length?t.map(card).join(''):'<div class="card">Keine offenen Follow-ups. Zeit für neue Besuche! 💪</div>';$('preview').innerHTML=t.slice(0,4).map(l=>`<div class="card" style="margin:8px 0"><b>${esc(l.company)}</b><div class="meta">${esc(l.next||'Follow-up')} · ${esc(l.due)}</div></div>`).join('')||'<div class="card">Keine offenen Follow-ups.</div>';$('areaList').innerHTML=S.leads.filter(l=>l.address).map(card).join('')||'<div class="card">Leads mit Adresse erscheinen hier.</div>'}
-$('search').oninput=render;document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()});function nav(a){window.open('https://www.google.com/maps/search/?api=1&query='+a,'_blank')}function visit(id){const l=S.leads.find(x=>x.id===id);const n=prompt('Besuchsnotiz für '+l.company,l.notes||'');if(n!==null){l.notes=n;if(l.status==='neu')l.status='kontaktiert';save()}}
-$('locate').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>$('locStatus').textContent=`Standort: ${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)}`,()=>$('locStatus').textContent='Standortzugriff nicht erlaubt.'):alert('Standort wird nicht unterstützt.');
-function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}$('csv').onclick=()=>{const c=['company','industry','status','contact','phone','email','address','provider','terminal','product','priority','need','next','due','notes'];dl('nexaro-leads.csv','\ufeff'+[c.join(';'),...S.leads.map(l=>c.map(k=>`"${String(l[k]||'').replaceAll('"','""')}"`).join(';'))].join('\n'),'text/csv')};$('json').onclick=()=>dl('nexaro-crm-backup.json',JSON.stringify(S,null,2),'application/json');$('restore').onchange=e=>{const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();alert('Backup wiederhergestellt.')}catch{alert('Ungültiges Backup.')}};r.readAsText(e.target.files[0])};$('demo').onclick=()=>{S.leads=[['Späti am Markt','Kiosk / Späti','neu','Halbe, Brandenburg','Solo','Heute anrufen'],['Getränke & Mehr','Getränkemarkt','kontaktiert','Lübben','Terminal','Mittwoch nachfassen'],['Mode & Alltag','Einzelhandel','termin','Luckau','Kassensystem / POS','Beratung vorbereiten']].map(x=>({id:uid(),company:x[0],industry:x[1],status:x[2],address:x[3],product:x[4],next:x[5],priority:'Hoch',due:new Date().toISOString().slice(0,10),notes:''}));save()};$('clear').onclick=()=>{if(confirm('Alle lokalen CRM-Daten löschen?')){S={leads:[]};save()}};render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+const KEY='nexaro-crm-v1';
+let S=JSON.parse(localStorage.getItem(KEY)||'{"leads":[],"tasks":[],"territory":[]}');
+
+const $=s=>document.querySelector(s);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    render();
+  };
+});
+
+function openLead(id){
+  const f=$('#form');
+  if(!f)return;
+  f.reset();
+  if(id){
+    const l=S.leads.find(x=>x.id===id);
+    if(l)Object.keys(l).forEach(k=>{
+      const e=f.querySelector(`[name="${k}"]`);
+      if(e)e.value=l[k]??'';
+    });
+  }
+  injectTPV();
+  f.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function injectTPV(){
+  const f=$('#form');
+  if(!f||f.querySelector('[name="tpv"]'))return;
+  const box=document.createElement('div');
+  box.innerHTML='<label>Monatliches Kartenzahlungsvolumen (TPV) €<input name="tpv" type="number" min="0" step="100" placeholder="z. B. 5000"></label>';
+  const first=f.querySelector('label');
+  if(first)first.after(box.firstElementChild);
+  else f.appendChild(box.firstElementChild);
+}
+
+function qualification(tpv){
+  tpv=Number(tpv)||0;
+  if(tpv>=15000)return{level:'A',text:'Sehr stark qualifiziert'};
+  if(tpv>=10000)return{level:'B',text:'Stark qualifiziert'};
+  if(tpv>=5000)return{level:'C',text:'Qualifiziert'};
+  return{level:'D',text:'Unter internem Ziel von €5.000 TPV'};
+}
+
+function tariff(tpv){
+  tpv=Number(tpv)||0;
+  const payg=tpv*0.0139;
+  const plus=tpv*0.0079+19;
+  return plus<payg
+    ?{name:'Zahlungen Plus',monthly:plus,fee:'0,79%'}
+    :{name:'Umsatzbasiertes Zahlen',monthly:payg,fee:'1,39%'};
+}
+
+function commission(tpv){
+  tpv=Number(tpv)||0;
+  let activation=tpv>=500?200:0;
+  let annualized=tpv*0.007*12*0.5;
+  let day30=Math.max(0,annualized-activation);
+  let master=tpv>15000?100:0;
+  return{
+    activation,
+    day30,
+    master,
+    total:activation+day30+master
+  };
+}
+
+function card(l){
+  const q=qualification(l.tpv);
+  const t=tariff(l.tpv);
+  return `<div class="card lead-card">
+    <h3>${l.firma||'Unbenannt'}</h3>
+    <p>${l.branche||''} · ${l.status||'Neu'}</p>
+    <p><strong>TPV:</strong> €${Number(l.tpv||0).toLocaleString('de-DE')}</p>
+    <p><strong>Qualifizierung:</strong> ${q.text}</p>
+    <p><strong>Tarif:</strong> ${t.name}</p>
+    <button onclick="openLead('${l.id}')">Bearbeiten</button>
+  </div>`;
+}
+
+function render(){
+  const today=new Date().toISOString().slice(0,10);
+  const leads=S.leads||[];
+  const tasks=S.tasks||[];
+  const root=$('main')||document.querySelector('.content')||document.body;
+
+  const stats=document.querySelectorAll('[data-stat]');
+  stats.forEach(e=>{
+    const type=e.dataset.stat;
+    if(type==='leads')e.textContent=leads.length;
+    if(type==='tasks')e.textContent=tasks.filter(x=>x.date===today&&!x.done).length;
+    if(type==='won')e.textContent=leads.filter(x=>x.status==='Gewonnen').length;
+    if(type==='appointments')e.textContent=leads.filter(x=>x.status==='Termin').length;
+  });
+
+  const search=$('#search');
+  if(search&&search.value){
+    const q=search.value.toLowerCase();
+    leads.filter(l=>JSON.stringify(l).toLowerCase().includes(q));
+  }
+}
+
+function collectForm(){
+  const f=$('#form');
+  if(!f)return null;
+  const data={};
+  new FormData(f).forEach((v,k)=>data[k]=v);
+  data.id=data.id||Date.now().toString();
+  data.tpv=Number(data.tpv)||0;
+  data.created=data.created||new Date().toISOString();
+  return data;
+}
+
+function setupForm(){
+  const f=$('#form');
+  if(!f)return;
+  injectTPV();
+  f.addEventListener('submit',e=>{
+    e.preventDefault();
+    const data=collectForm();
+    if(!data)return;
+    const i=S.leads.findIndex(x=>x.id===data.id);
+    if(i>=0)S.leads[i]=data;
+    else S.leads.unshift(data);
+    save();
+    render();
+    alert('Lead gespeichert.');
+  });
+}
+
+function setupQuick(){
+  const q=$('#quick');
+  const add=$('#add');
+  if(q)q.onclick=()=>openLead();
+  if(add)add.onclick=()=>openLead();
+}
+
+function setupSearch(){
+  const s=$('#search');
+  if(s)s.oninput=render;
+}
+
+function setupLocation(){
+  const b=$('#locate');
+  if(!b)return;
+  b.onclick=()=>{
+    if(!navigator.geolocation){
+      alert('Standort wird von diesem Gerät nicht unterstützt.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      p=>{
+        localStorage.setItem('nexaro-location',JSON.stringify({
+          lat:p.coords.latitude,
+          lng:p.coords.longitude
+        }));
+        alert('Standort übernommen.');
+      },
+      ()=>alert('Standort konnte nicht ermittelt werden.')
+    );
+  };
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setupForm();
+  setupQuick();
+  setupSearch();
+  setupLocation();
+  render();
+});
