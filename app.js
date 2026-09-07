@@ -206,6 +206,28 @@ function saveLead() {
 
   if (!data) return;
 
+  const tpv = Number(data.tpv) || 0;
+
+  // Interne Vertriebsqualifizierung
+  data.qualification =
+    tpv >= 15000 ? 'A' :
+    tpv >= 10000 ? 'B' :
+    tpv >= 5000 ? 'C' :
+    'D';
+
+  data.qualified = tpv >= 5000;
+
+  // Vertriebspriorität automatisch setzen
+  if (tpv >= 15000) {
+    data.priority = 'Hoch';
+  } else if (tpv >= 10000) {
+    data.priority = 'Hoch';
+  } else if (tpv >= 5000) {
+    data.priority = 'Mittel';
+  } else {
+    data.priority = 'Niedrig';
+  }
+
   const existing =
     S.leads.findIndex(x => x.id === data.id);
 
@@ -222,6 +244,7 @@ function saveLead() {
   closeLead();
   render();
 }
+
 
 function deleteLead(id) {
   if (!confirm('Diesen Lead wirklich löschen?')) {
